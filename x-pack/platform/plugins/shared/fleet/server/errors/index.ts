@@ -56,6 +56,14 @@ export class RegistryResponseError extends RegistryError {
   }
 }
 
+export class OciRegistryError extends FleetError {}
+export class OciRegistryConnectionError extends OciRegistryError {}
+export class OciRegistryResponseError extends OciRegistryError {
+  constructor(message: string, public readonly status: number) {
+    super(message);
+  }
+}
+
 // Package errors
 
 export class PackageInvalidDeploymentMode extends FleetError {}

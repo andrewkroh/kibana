@@ -18,6 +18,8 @@ import type {
   GetLimitedPackagesResponse,
   GetInfoResponse,
   InstallPackageResponse,
+  ListOciPackagesResponse,
+  InstallPackageFromOciRequest,
   DeletePackageRequest,
   DeletePackageResponse,
   UpdatePackageRequest,
@@ -611,3 +613,31 @@ function isRegistryConnectionError(error: RequestError) {
 function isUserError(error: RequestError) {
   return error.statusCode && error.statusCode >= 400 && error.statusCode < 500;
 }
+
+export const sendListOciPackages = () => {
+  return sendRequestForRq<ListOciPackagesResponse>({
+    path: epmRouteService.getListOciPackagesPath(),
+    method: 'get',
+    version: API_VERSIONS.internal.v1,
+  });
+};
+
+export const useListOciPackagesQuery = () => {
+  return useQuery<ListOciPackagesResponse, RequestError>({
+    queryKey: ['list-oci-packages'],
+    queryFn: () => sendListOciPackages(),
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const sendInstallPackageFromOci = (
+  body: InstallPackageFromOciRequest['body']
+): Promise<InstallPackageResponse> => {
+  return sendRequestForRq<InstallPackageResponse>({
+    path: epmRouteService.getInstallFromOciPath(),
+    method: 'post',
+    version: API_VERSIONS.internal.v1,
+    body,
+  });
+};

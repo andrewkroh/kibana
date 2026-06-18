@@ -24,7 +24,7 @@ import type { PackagePolicySOAttributes } from '../../../types';
 import { dataStreamService } from '../../data_streams';
 import { createAppContextStartContractMock } from '../../../mocks';
 import { appContextService } from '../../app_context';
-import { PackageNotFoundError } from '../../../errors';
+import { PackageNotFoundError, RegistryConnectionError } from '../../../errors';
 
 import { getSettings } from '../../settings';
 import { auditLoggingService } from '../../audit_logging';
@@ -406,6 +406,84 @@ owner: elastic`,
         },
         { id: 'fleet_server', name: 'fleet_server', title: 'Fleet Server', version: '1.0.0' },
         { id: 'nginx', name: 'nginx', title: 'Nginx', version: '1.0.0' },
+      ]);
+    });
+
+    it('should return installed packages not in registry when registry is unreachable', async () => {
+      MockRegistry.fetchList.mockRejectedValue(
+        new RegistryConnectionError('Error connecting to package registry')
+      );
+
+      const soClient = savedObjectsClientMock.create();
+      soClient.find.mockResolvedValue({
+        saved_objects: [
+          {
+            id: 'elasticsearch',
+            attributes: {
+              name: 'elasticsearch',
+              version: '0.0.1',
+              install_source: 'upload',
+              install_version: '0.0.1',
+              install_status: 'installed',
+            },
+          },
+        ],
+      } as any);
+      soClient.get.mockImplementation((type) => {
+        if (type === 'epm-packages-assets') {
+          return Promise.resolve({
+            attributes: {
+              data_utf8: `
+name: elasticsearch
+version: 0.0.1
+title: Elastic
+description: Elasticsearch description`,
+            },
+          } as any);
+        }
+
+        return Promise.resolve({
+          id: 'elasticsearch',
+          attributes: {
+            name: 'elasticsearch',
+            version: '0.0.1',
+            install_source: 'upload',
+            install_status: 'installed',
+            package_assets: [],
+          },
+        });
+      });
+      soClient.bulkGet.mockResolvedValue({
+        saved_objects: [
+          {
+            id: 'test',
+            references: [],
+            type: 'epm-package-assets',
+            attributes: {
+              asset_path: 'elasticsearch-0.0.1/manifest.yml',
+              data_utf8: `
+name: elasticsearch
+version: 0.0.1
+title: Elastic
+description: Elasticsearch description
+format_version: 0.0.1
+owner: elastic`,
+            },
+          },
+        ],
+      });
+
+      await expect(
+        getPackages({
+          savedObjectsClient: soClient,
+        })
+      ).resolves.toMatchObject([
+        {
+          id: 'elasticsearch',
+          name: 'elasticsearch',
+          version: '0.0.1',
+          title: 'Elastic',
+        },
       ]);
     });
 

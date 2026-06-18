@@ -188,6 +188,14 @@ export const config: PluginConfigDescriptor = {
       enableManagedLogsAndMetricsDataviews: schema.boolean({ defaultValue: true }),
       registryUrl: schema.maybe(schema.uri({ scheme: ['http', 'https'] })),
       registryProxyUrl: schema.maybe(schema.uri({ scheme: ['http', 'https'] })),
+      ociRegistry: schema.maybe(
+        schema.object({
+          url: schema.uri({ scheme: ['http', 'https'] }),
+          namespace: schema.string({ defaultValue: 'fleet/integrations' }),
+          username: schema.maybe(schema.string()),
+          password: schema.maybe(schema.string()),
+        })
+      ),
       agents: schema.object({
         enabled: schema.boolean({ defaultValue: true }),
         elasticsearch: schema.object({

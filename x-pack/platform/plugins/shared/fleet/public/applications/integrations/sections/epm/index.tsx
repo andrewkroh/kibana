@@ -19,6 +19,7 @@ import { EPMHomePage } from './screens/home';
 import { Detail } from './screens/detail';
 import { Policy } from './screens/policy';
 import { CreateIntegration } from './screens/create';
+import { OciInstall } from './screens/oci_install';
 import { CustomLanguagesOverview } from './screens/detail/custom_languages_overview';
 
 export const EPMApp: React.FunctionComponent = () => {
@@ -57,6 +58,9 @@ export const EPMApp: React.FunctionComponent = () => {
           <CreateIntegration />
         </Route>
       )}
+      <Route path={INTEGRATIONS_ROUTING_PATHS.integrations_oci_install}>
+        <OciInstall />
+      </Route>
       <Route path={INTEGRATIONS_ROUTING_PATHS.integrations}>
         <EPMHomePage />
       </Route>

@@ -1203,3 +1203,38 @@ export const RollbackPackageRequestSchema = {
     }),
   }),
 };
+
+export const ListOciPackagesResponseSchema = schema.object(
+  {
+    items: schema.arrayOf(
+      schema.object({
+        repository: schema.string(),
+        tag: schema.string(),
+        ref: schema.string(),
+        title: schema.maybe(schema.string()),
+        description: schema.maybe(schema.string()),
+        digest: schema.maybe(schema.string()),
+      })
+    ),
+  },
+  { meta: { id: 'list_oci_packages_response' } }
+);
+
+export const InstallPackageFromOciRequestSchema = {
+  body: schema.object(
+    {
+      ref: schema.maybe(schema.string()),
+      repository: schema.maybe(schema.string()),
+      tag: schema.maybe(schema.string()),
+      ignoreMappingUpdateErrors: schema.boolean({
+        defaultValue: false,
+        meta: { description: 'When true, ignore mapping update errors during installation' },
+      }),
+      skipDataStreamRollover: schema.boolean({
+        defaultValue: false,
+        meta: { description: 'When true, skip data stream rollover after installation' },
+      }),
+    },
+    { meta: { id: 'install_package_from_oci_request' } }
+  ),
+};

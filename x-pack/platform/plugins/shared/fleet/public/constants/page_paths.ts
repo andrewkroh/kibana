@@ -12,6 +12,7 @@ export type StaticPage =
   | 'overview'
   | 'integrations'
   | 'integration_create'
+  | 'integration_oci_install'
   | 'policies'
   | 'policies_list'
   | 'enrollment_tokens'
@@ -112,6 +113,7 @@ export const INTEGRATIONS_ROUTING_PATHS = {
   integrations_installed_updates_available: '/installed/updates_available/:category?',
   integrations_create: '/create',
   integrations_upload: '/upload',
+  integrations_oci_install: '/oci',
   integration_details: '/detail/:pkgkey/:panel?',
   integration_details_overview: '/detail/:pkgkey/overview',
   integration_details_policies: '/detail/:pkgkey/policies',
@@ -187,6 +189,7 @@ export const pagePathGetters: {
     return [INTEGRATIONS_BASE_PATH, `/installed/updates_available${categoryPath}${queryParams}`];
   },
   integration_create: () => [INTEGRATIONS_BASE_PATH, `/create`],
+  integration_oci_install: () => [INTEGRATIONS_BASE_PATH, `/oci`],
   integration_details_overview: ({ pkgkey, integration, returnAppId, returnPath }) => {
     const qs = stringify({ integration, returnAppId, returnPath });
     return [INTEGRATIONS_BASE_PATH, `/detail/${pkgkey}/overview${qs ? `?${qs}` : ''}`];

@@ -87,6 +87,8 @@ import {
   BulkNamespaceCustomizationRequestSchema,
   BulkNamespaceCustomizationResponseSchema,
   InstallRuleAssetsRequestSchema,
+  ListOciPackagesResponseSchema,
+  InstallPackageFromOciRequestSchema,
 } from '../../types';
 import type { FleetConfigType } from '../../config';
 import { FLEET_API_PRIVILEGES } from '../../constants/api_privileges';
@@ -117,6 +119,8 @@ import {
   rollbackAvailableCheckHandler,
   bulkRollbackAvailableCheckHandler,
   reviewUpgradeHandler,
+  listOciPackagesHandler,
+  installPackageFromOciHandler,
 } from './handlers';
 import { getFileHandler } from './file_handler';
 import {
@@ -1334,6 +1338,70 @@ export const registerRoutes = (router: FleetAuthzRouter, config: FleetConfigType
         },
       },
       installPackageByUploadHandler
+    );
+
+  router.versioned
+    .get({
+      path: EPM_API_ROUTES.LIST_OCI_PATTERN,
+      security: INSTALL_PACKAGES_SECURITY,
+      summary: `List packages from the configured OCI registry`,
+      options: {
+        tags: ['internal', 'oas-tag:Elastic Package Manager (EPM)'],
+      },
+      access: 'internal',
+    })
+    .addVersion(
+      {
+        version: API_VERSIONS.internal.v1,
+        validate: {
+          request: {},
+          response: {
+            200: {
+              description: 'OK: A successful request.',
+              body: () => ListOciPackagesResponseSchema,
+            },
+            400: {
+              description: 'A bad request.',
+              body: genericErrorResponse,
+            },
+          },
+        },
+      },
+      listOciPackagesHandler
+    );
+
+  router.versioned
+    .post({
+      path: EPM_API_ROUTES.INSTALL_FROM_OCI_PATTERN,
+      security: INSTALL_PACKAGES_SECURITY,
+      summary: `Install a package from the configured OCI registry`,
+      options: {
+        tags: ['internal', 'oas-tag:Elastic Package Manager (EPM)'],
+      },
+      access: 'internal',
+    })
+    .addVersion(
+      {
+        version: API_VERSIONS.internal.v1,
+        validate: {
+          request: InstallPackageFromOciRequestSchema,
+          response: {
+            200: {
+              description: 'OK: A successful request.',
+              body: () => InstallPackageResponseSchema,
+            },
+            400: {
+              description: 'A bad request.',
+              body: genericErrorResponse,
+            },
+            429: {
+              description: 'Too many requests.',
+              body: genericErrorResponse,
+            },
+          },
+        },
+      },
+      installPackageFromOciHandler
     );
 
   router.versioned

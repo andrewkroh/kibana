@@ -184,6 +184,12 @@ export const epmRouteService = {
       pkgVersion
     );
   },
+  getListOciPackagesPath: () => {
+    return EPM_API_ROUTES.LIST_OCI_PATTERN;
+  },
+  getInstallFromOciPath: () => {
+    return EPM_API_ROUTES.INSTALL_FROM_OCI_PATTERN;
+  },
 };
 
 export const packagePolicyRouteService = {

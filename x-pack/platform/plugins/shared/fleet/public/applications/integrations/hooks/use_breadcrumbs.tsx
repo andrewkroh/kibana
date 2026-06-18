@@ -50,6 +50,14 @@ const breadcrumbGetters: {
       }),
     },
   ],
+  integration_oci_install: () => [
+    BASE_BREADCRUMB,
+    {
+      text: i18n.translate('xpack.fleet.breadcrumbs.installFromOciRegistryPageTitle', {
+        defaultMessage: 'Install from OCI registry',
+      }),
+    },
+  ],
   integration_details_overview: ({ pkgTitle }) => [BASE_BREADCRUMB, { text: pkgTitle }],
   integration_policy_edit: ({ pkgTitle, pkgkey, policyName }) => [
     BASE_BREADCRUMB,

@@ -290,3 +290,26 @@ export const BulkRollbackAvailableCheckResponseSchema = schema.recordOf(
 export type BulkRollbackAvailableCheckResponse = TypeOf<
   typeof BulkRollbackAvailableCheckResponseSchema
 >;
+
+export interface OciPackageListItem {
+  repository: string;
+  tag: string;
+  ref: string;
+  title?: string;
+  description?: string;
+  digest?: string;
+}
+
+export interface ListOciPackagesResponse {
+  items: OciPackageListItem[];
+}
+
+export interface InstallPackageFromOciRequest {
+  body: {
+    ref?: string;
+    repository?: string;
+    tag?: string;
+    ignoreMappingUpdateErrors?: boolean;
+    skipDataStreamRollover?: boolean;
+  };
+}

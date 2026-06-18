@@ -48,6 +48,7 @@ import {
   GetInfoResponseSchema,
   UpdatePackageResponseSchema,
   InstallPackageResponseSchema,
+  ListOciPackagesResponseSchema,
   InstallKibanaAssetsResponseSchema,
   BulkInstallPackagesFromRegistryResponseSchema,
   GetDataStreamsResponseSchema,
@@ -70,6 +71,8 @@ import {
   getDataStreamsHandler,
   getInputsHandler,
   updateCustomIntegrationHandler,
+  listOciPackagesHandler,
+  installPackageFromOciHandler,
 } from './handlers';
 
 import { installPackageKibanaAssetsHandler } from './install_assets_handler';
@@ -84,6 +87,8 @@ jest.mock('./handlers', () => ({
   getBulkAssetsHandler: jest.fn(),
   installPackageFromRegistryHandler: jest.fn(),
   installPackageByUploadHandler: jest.fn(),
+  listOciPackagesHandler: jest.fn(),
+  installPackageFromOciHandler: jest.fn(),
   deletePackageHandler: jest.fn(),
   bulkInstallPackagesFromRegistryHandler: jest.fn(),
   getStatsHandler: jest.fn(),
@@ -667,6 +672,55 @@ describe('schema validation', () => {
       return res.ok({ body: expectedResponse });
     });
     await installPackageFromRegistryHandler(context, {} as any, response);
+
+    expect(response.ok).toHaveBeenCalledWith({
+      body: expectedResponse,
+    });
+    const validationResp = InstallPackageResponseSchema.validate(expectedResponse);
+    expect(validationResp).toEqual(expectedResponse);
+  });
+
+  it('list oci packages should return valid response', async () => {
+    const expectedResponse = {
+      items: [
+        {
+          repository: 'fleet/integrations/acme_widgets',
+          tag: '1.0.0',
+          ref: 'localhost:5000/fleet/integrations/acme_widgets:1.0.0',
+          title: 'Acme Widgets',
+        },
+      ],
+    };
+    (listOciPackagesHandler as jest.Mock).mockImplementation((ctx, request, res) => {
+      return res.ok({ body: expectedResponse });
+    });
+    await listOciPackagesHandler(context, {} as any, response);
+
+    expect(response.ok).toHaveBeenCalledWith({
+      body: expectedResponse,
+    });
+    const validationResp = ListOciPackagesResponseSchema.validate(expectedResponse);
+    expect(validationResp).toEqual(expectedResponse);
+  });
+
+  it('install package from oci should return valid response', async () => {
+    const expectedResponse: InstallPackageResponse = {
+      items: [
+        {
+          id: 'test',
+          type: KibanaSavedObjectType.dashboard,
+          originId: 'test',
+        },
+      ],
+      _meta: {
+        install_source: 'upload',
+        name: 'acme_widgets',
+      },
+    };
+    (installPackageFromOciHandler as jest.Mock).mockImplementation((ctx, request, res) => {
+      return res.ok({ body: expectedResponse });
+    });
+    await installPackageFromOciHandler(context, {} as any, response);
 
     expect(response.ok).toHaveBeenCalledWith({
       body: expectedResponse,

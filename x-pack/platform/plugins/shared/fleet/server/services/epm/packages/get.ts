@@ -61,6 +61,7 @@ import type { Installation, PackageInfo, PackagePolicySOAttributes } from '../..
 import {
   PackageFailedVerificationError,
   PackageNotFoundError,
+  RegistryConnectionError,
   RegistryResponseError,
   PackageInvalidArchiveError,
   FleetUnauthorizedError,
@@ -106,7 +107,17 @@ function nameAsTitle(name: string) {
 }
 
 export async function getCategories(options: GetCategoriesRequest['query']) {
-  return Registry.fetchCategories(options);
+  try {
+    return await Registry.fetchCategories(options);
+  } catch (error) {
+    if (error instanceof RegistryConnectionError) {
+      appContextService
+        .getLogger()
+        .warn(`Unable to fetch categories from package registry: ${error.message}`);
+      return [];
+    }
+    throw error;
+  }
 }
 
 export async function getPackages(
@@ -123,17 +134,27 @@ export async function getPackages(
     prerelease = false,
   } = options;
 
-  const registryItems = await Registry.fetchList({ category, prerelease }).then((items) => {
-    return items.map((item) =>
-      Object.assign({}, item, { title: item.title || nameAsTitle(item.name) }, { id: item.name })
-    );
-  });
+  let registryItems: Awaited<ReturnType<typeof Registry.fetchList>>;
+  try {
+    registryItems = await Registry.fetchList({ category, prerelease });
+  } catch (error) {
+    if (error instanceof RegistryConnectionError) {
+      logger.warn(`Unable to fetch packages from package registry: ${error.message}`);
+      registryItems = [];
+    } else {
+      throw error;
+    }
+  }
+
+  const registryItemsWithTitle = registryItems.map((item) =>
+    Object.assign({}, item, { title: item.title || nameAsTitle(item.name) }, { id: item.name })
+  );
   // get the installed packages
   const packageSavedObjects = await getPackageSavedObjects(savedObjectsClient);
   const MAX_PKGS_TO_LOAD_TITLE = 10;
 
   const packagesNotInRegistry = packageSavedObjects.saved_objects.filter(
-    (pkg) => !registryItems.some((item) => item.name === pkg.id)
+    (pkg) => !registryItemsWithTitle.some((item) => item.name === pkg.id)
   );
 
   const uploadedPackagesNotInRegistry = (
@@ -178,7 +199,7 @@ export async function getPackages(
   ).filter((p): p is Installable<any> => p !== null);
 
   const filteredPackages = getFilteredSearchPackages();
-  let packageList = registryItems
+  let packageList = registryItemsWithTitle
     .map((item) =>
       createInstallableFrom(
         item,

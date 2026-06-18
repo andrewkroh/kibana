@@ -38,6 +38,7 @@ import type {
   PackageSpecCategory,
   RollbackAvailableCheckResponse,
   BulkRollbackAvailableCheckResponse,
+  ListOciPackagesResponse,
 } from '../../../common/types';
 import type {
   GetCategoriesRequestSchema,
@@ -66,6 +67,7 @@ import type {
   GetKnowledgeBaseRequestSchema,
   DeletePackageResponseSchema,
   ReviewUpgradeRequestSchema,
+  InstallPackageFromOciRequestSchema,
 } from '../../types';
 import { KibanaSavedObjectType } from '../../types';
 import {
@@ -127,6 +129,7 @@ import { DatasetNamePrefixError } from '../../services/epm/packages/custom_integ
 import { UPLOAD_RETRY_AFTER_MS } from '../../services/epm/packages/install';
 import { getPackagePoliciesCountByPackageName } from '../../services/package_policies/package_policies_aggregation';
 import { getPackageKnowledgeBase } from '../../services/epm/packages';
+import { listOciPackages, pullOciPackage, OciRegistryError } from '../../services/epm/oci';
 
 import { getPackagePolicyIdsForCurrentUser } from './bulk_handler';
 
@@ -632,6 +635,88 @@ export const installPackageByUploadHandler: FleetRequestHandler<
       });
     }
     throw res.error;
+  }
+};
+
+export const listOciPackagesHandler: FleetRequestHandler = async (context, request, response) => {
+  try {
+    const items = await listOciPackages();
+    const body: ListOciPackagesResponse = { items };
+    return response.ok({ body });
+  } catch (error) {
+    if (error instanceof OciRegistryError) {
+      return response.customError({
+        statusCode: 400,
+        body: { message: error.message },
+      });
+    }
+    throw error;
+  }
+};
+
+export const installPackageFromOciHandler: FleetRequestHandler<
+  undefined,
+  undefined,
+  TypeOf<typeof InstallPackageFromOciRequestSchema.body>
+> = async (context, request, response) => {
+  const coreContext = await context.core;
+  const fleetContext = await context.fleet;
+  const savedObjectsClient = fleetContext.internalSoClient;
+  const esClient = coreContext.elasticsearch.client.asInternalUser;
+  const spaceId = fleetContext.spaceId;
+  const installSource = 'upload';
+
+  try {
+    const pulledPackage = await pullOciPackage({
+      ref: request.body.ref,
+      repository: request.body.repository,
+      tag: request.body.tag,
+    });
+
+    const res = await installPackage({
+      installSource,
+      savedObjectsClient,
+      esClient,
+      archiveBuffer: pulledPackage.archiveBuffer,
+      spaceId,
+      contentType: pulledPackage.contentType,
+      request,
+      ignoreMappingUpdateErrors: request.body.ignoreMappingUpdateErrors,
+      skipDataStreamRollover: request.body.skipDataStreamRollover,
+    });
+
+    if (!res.error) {
+      const body: InstallPackageResponse = {
+        items: res.assets || [],
+        _meta: {
+          install_source: res.installSource ?? installSource,
+          name: res.pkgName,
+        },
+      };
+      return response.ok({ body });
+    }
+
+    if (res.error instanceof FleetTooManyRequestsError) {
+      return response.customError({
+        statusCode: 429,
+        body: {
+          message: res.error.message,
+        },
+        headers: {
+          'retry-after': Math.ceil(UPLOAD_RETRY_AFTER_MS / 1000).toString(),
+        },
+      });
+    }
+
+    throw res.error;
+  } catch (error) {
+    if (error instanceof OciRegistryError) {
+      return response.customError({
+        statusCode: 400,
+        body: { message: error.message },
+      });
+    }
+    throw error;
   }
 };
 

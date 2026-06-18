@@ -191,6 +191,34 @@ describe('Config schema', () => {
     }).not.toThrow();
   });
 
+  it('should allow to specify ociRegistry configuration', () => {
+    const result = config.schema.validate({
+      ociRegistry: {
+        url: 'http://localhost:5000',
+        namespace: 'fleet/integrations',
+        username: 'user',
+        password: 'secret',
+      },
+    });
+
+    expect(result.ociRegistry).toEqual({
+      url: 'http://localhost:5000',
+      namespace: 'fleet/integrations',
+      username: 'user',
+      password: 'secret',
+    });
+  });
+
+  it('should default ociRegistry namespace', () => {
+    const result = config.schema.validate({
+      ociRegistry: {
+        url: 'http://localhost:5000',
+      },
+    });
+
+    expect(result.ociRegistry?.namespace).toBe('fleet/integrations');
+  });
+
   describe('deprecations', () => {
     it('should add two deprecations when trying to enable a non existing experimental feature with enableExperimental', () => {
       const res = applyConfigDeprecations({

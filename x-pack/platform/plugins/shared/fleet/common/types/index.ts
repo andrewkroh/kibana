@@ -20,6 +20,12 @@ export interface FleetConfigType {
   productVersionsApiTimeoutMs?: number;
   registryUrl?: string;
   registryProxyUrl?: string;
+  ociRegistry?: {
+    url: string;
+    namespace?: string;
+    username?: string;
+    password?: string;
+  };
   agents: {
     enabled: boolean;
     elasticsearch: {

@@ -37,6 +37,11 @@ export const CreateNewIntegrationButton: React.FC = () => {
     history.push('/upload');
   }, [history]);
 
+  const onOciInstallClick = useCallback(() => {
+    setIsPopoverOpen(false);
+    history.push('/oci');
+  }, [history]);
+
   return (
     <EuiFlexGroup gutterSize="none" responsive={false} alignItems="stretch">
       <EuiFlexItem grow={false}>
@@ -102,6 +107,19 @@ export const CreateNewIntegrationButton: React.FC = () => {
               >
                 {i18n.translate('xpack.fleet.epmList.uploadIntegrationPackageButton', {
                   defaultMessage: 'Upload integration package',
+                })}
+              </EuiContextMenuItem>,
+              <EuiContextMenuItem
+                key="oci-install"
+                icon="package"
+                onClick={(ev) => {
+                  ev.preventDefault();
+                  onOciInstallClick();
+                }}
+                data-test-subj="installFromOciRegistryBtn"
+              >
+                {i18n.translate('xpack.fleet.epmList.installFromOciRegistryButton', {
+                  defaultMessage: 'Install from OCI registry',
                 })}
               </EuiContextMenuItem>,
             ]}

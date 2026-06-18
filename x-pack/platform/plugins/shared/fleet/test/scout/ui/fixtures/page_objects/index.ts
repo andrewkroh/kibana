@@ -14,6 +14,7 @@ import { CreateIntegrationLandingPage } from './create_integration_landing_page'
 import { FleetHomePage } from './fleet_home';
 import { IntegrationHomePage } from './integration_home';
 import { ManageIntegrationsTablePage } from './manage_integrations_table_page';
+import { OciInstallPage } from './oci_install_page';
 
 export interface StreamsPageObjects extends PageObjects {
   browseIntegrations: BrowseIntegrationPage;
@@ -22,6 +23,7 @@ export interface StreamsPageObjects extends PageObjects {
   integrationHome: IntegrationHomePage;
   copyIntegration: CopyIntegrationPage;
   manageIntegrationsTable: ManageIntegrationsTablePage;
+  ociInstall: OciInstallPage;
 }
 
 export function extendPageObjects(pageObjects: PageObjects, page: ScoutPage): StreamsPageObjects {
@@ -33,5 +35,6 @@ export function extendPageObjects(pageObjects: PageObjects, page: ScoutPage): St
     fleetHome: createLazyPageObject(FleetHomePage, page),
     integrationHome: createLazyPageObject(IntegrationHomePage, page),
     manageIntegrationsTable: createLazyPageObject(ManageIntegrationsTablePage, page),
+    ociInstall: createLazyPageObject(OciInstallPage, page),
   };
 }
